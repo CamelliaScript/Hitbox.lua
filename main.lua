@@ -6,19 +6,18 @@ local Client = Players.LocalPlayer
 local size = 30
 local hitboxGeneral = false
 local disabledPlayers = {}
-local usuariosActivos = {} -- Tabla para usuarios con hitbox activo
+local usuariosActivos = {} -- Usuarios con hitbox activo
 
 -- COLORES PASTEL AESTHETIC
-local COLOR_BG = Color3.fromRGB(170,255,200)       -- Fondo del Main Frame
-local COLOR_BTN = Color3.fromRGB(120,220,160)      -- Botones
-local COLOR_HOVER = Color3.fromRGB(100,200,140)    -- Hover/Click feedback
-local COLOR_SLIDER = Color3.fromRGB(160,240,200)   -- Slider/Knob
-local COLOR_WHITE = Color3.fromRGB(255,255,255)    -- Texto y bordes
-local COLOR_GRAY = Color3.fromRGB(140,220,180)     -- Textbox / barra slider
+local COLOR_BG = Color3.fromRGB(170,255,200)
+local COLOR_BTN = Color3.fromRGB(120,220,160)
+local COLOR_HOVER = Color3.fromRGB(100,200,140)
+local COLOR_SLIDER = Color3.fromRGB(160,240,200)
+local COLOR_WHITE = Color3.fromRGB(255,255,255)
+local COLOR_GRAY = Color3.fromRGB(140,220,180)
 
--- ================= GUI =================
+-- GUI
 local guiEnabled = true
-
 local ScreenGui = Instance.new("ScreenGui", Client.PlayerGui)
 ScreenGui.ResetOnSpawn = false
 
@@ -29,11 +28,9 @@ Main.BackgroundColor3 = COLOR_BG
 Main.BorderSizePixel = 0
 Instance.new("UICorner", Main).CornerRadius = UDim.new(0,10)
 
-local mainStroke = Instance.new("UIStroke", Main)
-mainStroke.Color = COLOR_WHITE
-mainStroke.Thickness = 4
+Instance.new("UIStroke", Main).Color = COLOR_WHITE
 
--- ================= TITULO =================
+-- TITULO
 local Title = Instance.new("TextLabel", Main)
 Title.Size = UDim2.new(1,0,0,30)
 Title.BackgroundTransparency = 1
@@ -42,35 +39,30 @@ Title.Font = Enum.Font.GothamBold
 Title.TextSize = 24
 Title.TextColor3 = COLOR_WHITE
 
--- ================= TAMAÑO =================
+-- SLIDER
 local SizeBg = Instance.new("Frame", Main)
 SizeBg.Size = UDim2.new(1,-20,0,26)
 SizeBg.Position = UDim2.new(0,10,0,40)
-SizeBg.BackgroundColor3 = COLOR_BG  -- mismo color que el Main Frame
+SizeBg.BackgroundColor3 = COLOR_BG
 Instance.new("UICorner", SizeBg).CornerRadius = UDim.new(0,6)
 
 local SizeLabel = Instance.new("TextLabel", SizeBg)
 SizeLabel.Size = UDim2.new(1,0,1,0)
-SizeLabel.BackgroundTransparency = 1  -- transparente, elimina el rectángulo negro
+SizeLabel.BackgroundTransparency = 1
 SizeLabel.Text = "Tamaño: "..size
 SizeLabel.Font = Enum.Font.GothamBold
 SizeLabel.TextSize = 24
 SizeLabel.TextColor3 = COLOR_WHITE
 SizeLabel.TextXAlignment = Enum.TextXAlignment.Left
 
--- ================= SLIDER =================
 local Slider = Instance.new("Frame", Main)
 Slider.Size = UDim2.new(1,-20,0,30)
 Slider.Position = UDim2.new(0,10,0,72)
 Slider.BackgroundColor3 = COLOR_GRAY
 Instance.new("UICorner", Slider).CornerRadius = UDim.new(0,6)
 
--- Degradado de la barra
 local sliderGradient = Instance.new("UIGradient", Slider)
-sliderGradient.Color = ColorSequence.new({
-	ColorSequenceKeypoint.new(0, Color3.fromRGB(120,220,160)),
-	ColorSequenceKeypoint.new(1, Color3.fromRGB(160,240,200))
-})
+sliderGradient.Color = ColorSequence.new({ColorSequenceKeypoint.new(0, Color3.fromRGB(120,220,160)), ColorSequenceKeypoint.new(1, Color3.fromRGB(160,240,200))})
 
 local Knob = Instance.new("TextButton", Slider)
 Knob.Size = UDim2.new(0,40,1,0)
@@ -96,7 +88,7 @@ RS.RenderStepped:Connect(function()
 	end
 end)
 
--- ================= USUARIO =================
+-- USUARIO
 local UserBox = Instance.new("TextBox", Main)
 UserBox.Size = UDim2.new(1,-20,0,30)
 UserBox.Position = UDim2.new(0,10,0,115)
@@ -109,16 +101,12 @@ UserBox.PlaceholderText = "Usuario"
 UserBox.Text = ""
 Instance.new("UICorner", UserBox).CornerRadius = UDim.new(0,6)
 
-local function resizeText()
+UserBox:GetPropertyChangedSignal("Text"):Connect(function()
 	local l = #UserBox.Text
 	UserBox.TextSize = l <= 12 and 22 or l <= 18 and 18 or 14
-end
-
-UserBox:GetPropertyChangedSignal("Text"):Connect(function()
-	resizeText()
 end)
 
--- ================= BOTONES =================
+-- BOTONES
 local function createButton(parent, text, yPos, callback)
 	local btn = Instance.new("TextButton", parent)
 	btn.Size = UDim2.new(1,-20,0,28)
@@ -153,19 +141,14 @@ end)
 
 local GeneralBtn = createButton(Main, "Hitbox General", 225, function()
 	hitboxGeneral = not hitboxGeneral
-	if hitboxGeneral then
-		GeneralBtn.Text = "Hitbox Normal"
-	else
-		GeneralBtn.Text = "Hitbox General"
-	end
+	GeneralBtn.Text = hitboxGeneral and "Hitbox Normal" or "Hitbox General"
 end)
 
--- ================= HITBOX LOGIC =================
+-- HITBOX LOGIC
 local function applyHitbox(player)
 	if player == Client then return end
 	local char = player.Character
 	if not char then return end
-
 	local hrp = char:FindFirstChild("HumanoidRootPart")
 	local hum = char:FindFirstChild("Humanoid")
 	if not hrp or not hum or hum.Health <= 0 then return end
@@ -180,18 +163,22 @@ local function applyHitbox(player)
 		hrp.CanCollide = false
 		hrp.Color = COLOR_BG
 
-		if not hrp:FindFirstChild("SelectionBox") then
-			local sb = Instance.new("SelectionBox")
+		local sb = hrp:FindFirstChildOfClass("SelectionBox")
+		if not sb then
+			sb = Instance.new("SelectionBox")
 			sb.Adornee = hrp
 			sb.Color3 = COLOR_BG
 			sb.LineThickness = 0.05
 			sb.SurfaceTransparency = 1
 			sb.Parent = hrp
+		else
+			sb.Adornee = hrp
+			sb.Color3 = COLOR_BG
 		end
 	else
 		hrp.Size = Vector3.new(2,2,1)
 		hrp.Transparency = 1
-		local sb = hrp:FindFirstChild("SelectionBox")
+		local sb = hrp:FindFirstChildOfClass("SelectionBox")
 		if sb then sb:Destroy() end
 	end
 end
@@ -202,7 +189,7 @@ RS.RenderStepped:Connect(function()
 	end
 end)
 
--- ================= TOGGLE GUI =================
+-- TOGGLE GUI
 local function toggleGUI(show)
 	guiEnabled = show
 	if show then ScreenGui.Enabled = true end
